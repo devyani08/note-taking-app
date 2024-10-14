@@ -1,6 +1,6 @@
 # 🎈 Notion like note taking app in making!
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+[![Open in Streamlit]([https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/](https://gdp-dashbrd.streamlit.app/))
 
 ### How to run it on your own machine
 
