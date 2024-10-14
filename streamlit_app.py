@@ -1,17 +1,15 @@
 import streamlit as st
+import json
 import base64
 from datetime import datetime
-import zipfile
-import io
-import pdfkit
 
 # Initialize session state
 if 'data' not in st.session_state:
     st.session_state.data = {"folders": {}, "pages": {}}
 
-def get_download_link(content, filename, file_type="octet-stream"):
-    b64 = base64.b64encode(content).decode()
-    return f'<a href="data:application/{file_type};base64,{b64}" download="{filename}">Download {filename}</a>'
+def get_download_link(content, filename):
+    b64 = base64.b64encode(content.encode()).decode()
+    return f'<a href="data:application/octet-stream;base64,{b64}" download="{filename}">Download {filename}</a>'
 
 def create_folder():
     st.subheader("Create New Folder")
@@ -56,8 +54,13 @@ def view_content():
             for page in st.session_state.data["folders"][selected_folder]:
                 st.write(f"- {page}")
             
-            if st.button("Download Folder as ZIP"):
-                download_folder_as_zip(selected_folder)
+            if st.button("Download Folder"):
+                folder_data = {
+                    "folder_name": selected_folder,
+                    "pages": [st.session_state.data["pages"][page] for page in st.session_state.data["folders"][selected_folder]]
+                }
+                download_data = json.dumps(folder_data, indent=2)
+                st.markdown(get_download_link(download_data, f"{selected_folder}.json"), unsafe_allow_html=True)
         else:
             st.write("No folders created yet.")
     
@@ -71,68 +74,33 @@ def view_content():
             st.write(f"Created at: {page_data['created_at']}")
             st.write(page_data['content'])
             
-            if st.button("Download Page as PDF"):
-                download_page_as_pdf(selected_page)
+            if st.button("Download Page"):
+                download_data = json.dumps(page_data, indent=2)
+                st.markdown(get_download_link(download_data, f"{selected_page}.json"), unsafe_allow_html=True)
         else:
             st.write("No pages created yet.")
 
-# Function to download folder as a ZIP file containing PDFs of pages
-def download_folder_as_zip(folder_name):
-    folder_pages = st.session_state.data["folders"].get(folder_name, [])
-    
-    # Create an in-memory ZIP file
-    zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-        for page_title in folder_pages:
-            pdf_content = generate_pdf_content(page_title)
-            pdf_filename = f"{page_title}.pdf"
-            zip_file.writestr(pdf_filename, pdf_content)
-    
-    # Create download link for ZIP file
-    zip_buffer.seek(0)
-    b64_zip = base64.b64encode(zip_buffer.read()).decode()
-    href = f'<a href="data:application/zip;base64,{b64_zip}" download="{folder_name}.zip">Download {folder_name}.zip</a>'
-    st.markdown(href, unsafe_allow_html=True)
-
-# Function to generate PDF content
-
-def generate_pdf_content(page_title):
-    page_data = st.session_state.data["pages"][page_title]
-    html_content = f"""
-    <html>
-    <head><title>{page_data['title']}</title></head>
-    <body>
-    <h1>{page_data['title']}</h1>
-    <p><strong>Folder:</strong> {page_data['folder']}</p>
-    <p><strong>Created at:</strong> {page_data['created_at']}</p>
-    <p>{page_data['content'].replace('\n', '<br>')}</p>
-    </body>
-    </html>
-    """
-    # Generate PDF content using pdfkit (HTML to PDF)
-    pdf_content = pdfkit.from_string(html_content, False)
-    return pdf_content
-
-
-# Function to download individual page as PDF
-def download_page_as_pdf(page_title):
-    pdf_content = generate_pdf_content(page_title)
-    st.markdown(get_download_link(pdf_content, f"{page_title}.pdf", file_type="pdf"), unsafe_allow_html=True)
-
-# Sidebar menu for downloading
+# New function to handle download options for folders and pages
 def sidebar_download_options():
     st.sidebar.subheader("Folder & Page Hierarchy")
     if st.session_state.data["folders"]:
         for folder, pages in st.session_state.data["folders"].items():
-            # Folder name with download button for ZIP file
-            with st.sidebar.expander(f"📁 {folder}", expanded=True):
-                if st.button(f"Download Folder '{folder}' as ZIP"):
-                    download_folder_as_zip(folder)
+            # Folder name with a three-dot-like menu for downloading the entire folder
+            with st.sidebar.expander(f"📁 {folder}"):
+                if st.button(f"Download Folder '{folder}'"):
+                    folder_data = {
+                        "folder_name": folder,
+                        "pages": [st.session_state.data["pages"][page] for page in pages]
+                    }
+                    download_data = json.dumps(folder_data, indent=2)
+                    st.sidebar.markdown(get_download_link(download_data, f"{folder}.json"), unsafe_allow_html=True)
                 for page in pages:
-                    # Page name with a download option for PDF
-                    st.sidebar.markdown(f"   - 📄 {page}")
-                    if st.button(f"Download Page '{page}' as PDF", key=f"{page}_download"):
-                        download_page_as_pdf(page)
+                    # Page name with a three-dot-like menu for downloading the page
+                    st.markdown(f"   - 📄 {page}")
+                    if st.button(f"Download Page '{page}'", key=f"{page}_download"):
+                        page_data = st.session_state.data["pages"][page]
+                        download_data = json.dumps(page_data, indent=2)
+                        st.sidebar.markdown(get_download_link(download_data, f"{page}.json"), unsafe_allow_html=True)
 
     # Also show pages not in any folder
     standalone_pages = [page for page, data in st.session_state.data["pages"].items() if data["folder"] == ""]
@@ -140,8 +108,10 @@ def sidebar_download_options():
         st.sidebar.subheader("Standalone Pages")
         for page in standalone_pages:
             st.sidebar.markdown(f"- 📄 {page}")
-            if st.button(f"Download Page '{page}' as PDF", key=f"{page}_standalone_download"):
-                download_page_as_pdf(page)
+            if st.button(f"Download Page '{page}'", key=f"{page}_standalone_download"):
+                page_data = st.session_state.data["pages"][page]
+                download_data = json.dumps(page_data, indent=2)
+                st.sidebar.markdown(get_download_link(download_data, f"{page}.json"), unsafe_allow_html=True)
 
 def main():
     st.set_page_config(page_title="Notion Clone with Folders", page_icon="📁")
