@@ -95,6 +95,7 @@ def download_folder_as_zip(folder_name):
     st.markdown(href, unsafe_allow_html=True)
 
 # Function to generate PDF content
+
 def generate_pdf_content(page_title):
     page_data = st.session_state.data["pages"][page_title]
     html_content = f"""
@@ -111,6 +112,7 @@ def generate_pdf_content(page_title):
     # Generate PDF content using pdfkit (HTML to PDF)
     pdf_content = pdfkit.from_string(html_content, False)
     return pdf_content
+
 
 # Function to download individual page as PDF
 def download_page_as_pdf(page_title):
