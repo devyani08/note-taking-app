@@ -114,7 +114,7 @@ def sidebar_download_options():
                 st.sidebar.markdown(get_download_link(download_data, f"{page}.json"), unsafe_allow_html=True)
 
 def main():
-    st.set_page_config(page_title="Fénix Potion🐦‍🔥", page_icon="📁")
+    st.set_page_config(page_title="Fénix Potion🐦‍🔥", page_icon="🐦‍🔥")
     st.title("Notion Clone with Folders")
     
     menu = ["Create Folder", "Create Page", "View Content"]
