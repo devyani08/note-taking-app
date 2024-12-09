@@ -81,7 +81,19 @@ def view_content():
             st.write("No pages created yet.")
 
 def main():
-    st.set_page_config(page_title="Fénix Potion🐦‍🔥", page_icon="📁")
+    st.set_page_config(page_title="Fénix Potion🐦‍🔥", page_icon="📁", layout="wide", initial_sidebar_state="auto",menu_items={'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    })
+    hide_streamlit_style = """
+        <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        </style>
+    """
+
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
     st.title("Fénix Potion🐦‍🔥")
     
     menu = ["Create Folder", "Create Page", "View Content"]
